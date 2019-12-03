@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/byuoitav/common/pooled"
+	"github.com/byuoitav/connpool"
 	"github.com/fatih/color"
 )
 
@@ -31,7 +31,7 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		return 0, errors.New(msg)
 	}
 	var response []byte
-	work := func(conn pooled.Conn) error {
+	work := func(conn connpool.Conn) error {
 		response, err = d.GetStatus(ctx, subscribe, unsubscribe, conn)
 		if err != nil {
 			msg := fmt.Sprintf("Could not execute commands: %s", err.Error())
@@ -96,7 +96,7 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 		return err
 	}
 
-	work := func(conn pooled.Conn) error {
+	work := func(conn connpool.Conn) error {
 		n, err := conn.Write(command)
 		switch {
 		case err != nil:
@@ -134,7 +134,7 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 		return false, errors.New(msg)
 	}
 	var response []byte
-	work := func(conn pooled.Conn) error {
+	work := func(conn connpool.Conn) error {
 		response, err = d.GetStatus(ctx, subscribe, unsubscribe, conn)
 		if err != nil {
 			errorMessage := "could not execute commands: " + err.Error()
@@ -206,7 +206,7 @@ func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) err
 		return err
 	}
 
-	work := func(conn pooled.Conn) error {
+	work := func(conn connpool.Conn) error {
 		n, err := conn.Write(command)
 		switch {
 		case err != nil:
@@ -314,7 +314,7 @@ func (d *DSP) BuildRawCommand(ctx context.Context, input, state string, data []b
 }
 
 //GetStatus .
-func (d *DSP) GetStatus(ctx context.Context, subscribe, unsubscribe []byte, pconn pooled.Conn) ([]byte, error) {
+func (d *DSP) GetStatus(ctx context.Context, subscribe, unsubscribe []byte, pconn connpool.Conn) ([]byte, error) {
 
 	log.Printf("[status] handling status command: %s...", color.HiMagentaString("%X", subscribe))
 
