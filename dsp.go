@@ -70,3 +70,7 @@ func NewDSP(addr string, opts ...Option) *DSP {
 
 	return d
 }
+
+func (d *DSP) GetInfo(ctx context.Context) (interface{}, error) {
+	return nil, nil	
+}
