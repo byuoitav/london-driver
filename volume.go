@@ -41,7 +41,7 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		return nil
 	}
 
-	err = pool.Do(d.Address, work)
+	err = d.pool.Do(d.Address, work)
 	if err != nil {
 		return 0, err
 	}
@@ -107,7 +107,7 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 		return nil
 	}
 
-	err = pool.Do(d.Address, work)
+	err = d.pool.Do(d.Address, work)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 		return nil
 	}
 
-	err = pool.Do(d.Address, work)
+	err = d.pool.Do(d.Address, work)
 	if err != nil {
 		return false, err
 	}
@@ -217,7 +217,7 @@ func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) err
 		return nil
 	}
 
-	err = pool.Do(d.Address, work)
+	err = d.pool.Do(d.Address, work)
 	if err != nil {
 		return err
 	}
