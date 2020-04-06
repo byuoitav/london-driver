@@ -1,34 +1,31 @@
 package london
 
 import (
+	"bytes"
 	"context"
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/byuoitav/connpool"
 )
 
-const (
-	volumeScaleFactor = 65536
-)
-
-// GetVolumeByBlock returns the volume [0, 100] of the given block.
-func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
-	subscribe, err := buildSubscribeCommand(methodSubscribePercent, stateGain, block, minSubscribeInterval)
+// GetMutedByBlock returns true if the given block is muted.
+func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
+	subscribe, err := buildSubscribeCommand(methodSubscribe, stateMute, block, minSubscribeInterval)
 	if err != nil {
-		return 0, fmt.Errorf("unable to build subscribe command: %w", err)
+		return false, fmt.Errorf("unable to build subscribe command: %w", err)
 	}
 
-	unsubscribe, err := buildUnsubscribeCommand(methodUnsubscribePercent, stateGain, block)
+	unsubscribe, err := buildUnsubscribeCommand(methodUnsubscribe, stateMute, block)
 	if err != nil {
-		return 0, fmt.Errorf("unable to build unsubscribe command: %w", err)
+		return false, fmt.Errorf("unable to build unsubscribe command: %w", err)
 	}
 
 	var resp []byte
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
-		d.infof("Getting volume on %v", block)
+		d.infof("Getting mute on %v", block)
 		d.debugf("Writing subscribe command: 0x%x", subscribe)
 
 		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
@@ -62,42 +59,42 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
 	resp, err = decode(resp)
 	if err != nil {
-		return 0, fmt.Errorf("unable to decode response: %w", err)
+		return false, fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	data := resp[len(resp)-4:]
-	vol := binary.BigEndian.Uint32(data)
+	data := resp[len(resp)-1:]
 
-	vol = vol / volumeScaleFactor
-	vol++
-
-	d.infof("Volume on %v is %v", block, int(vol))
-
-	return int(vol), nil
+	switch {
+	case bytes.Equal(data, []byte{0}):
+		d.infof("Mute on %v is %v", block, false)
+		return false, nil
+	case bytes.Equal(data, []byte{1}):
+		d.infof("Mute on %v is %v", block, true)
+		return true, nil
+	default:
+		return false, errors.New("bad data in response from DSP")
+	}
 }
 
-// SetVolumeByBlock sets the volume on the given block. Volume must be in the range [0, 100].
-func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) error {
-	if volume < 0 || volume > 100 {
-		return fmt.Errorf("volume must be in range [0, 100]")
+// SetMutedByBlock sets the mute state on the given block.
+func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) error {
+	data := []byte{0x00, 0x00, 0x00, 0x00}
+	if muted {
+		data[3] = 0x01
 	}
 
-	volume *= volumeScaleFactor
-	data := make([]byte, 4)
-	binary.BigEndian.PutUint32(data, uint32(volume))
-
-	cmd, err := buildCommand(methodSetPercent, stateGain, block, data)
+	cmd, err := buildCommand(methodSet, stateMute, block, data)
 	if err != nil {
 		return fmt.Errorf("unable to build command: %w", err)
 	}
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
-		d.infof("Setting volume on %v to %v", block, volume)
+		d.infof("Setting mute on %v to %v", block, muted)
 		d.debugf("Writing command: 0x%x", cmd)
 
 		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
@@ -116,7 +113,7 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 		return err
 	}
 
-	d.infof("Volume on %v successfully set", block)
+	d.infof("Mute on %v successfully set", block)
 
 	return nil
 }
