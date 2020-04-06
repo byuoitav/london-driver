@@ -25,6 +25,11 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 	var resp []byte
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
+		d.infof("Getting mute on %v", block)
+		d.debugf("Writing subscribe command: 0x%x", subscribe)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
+
 		n, err := conn.Write(subscribe)
 		switch {
 		case err != nil:
@@ -37,6 +42,11 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 		if err != nil {
 			return fmt.Errorf("unable to read response: %w", err)
 		}
+
+		d.debugf("Got response: 0x%x", resp)
+		d.debugf("Writing unsubscribe command: 0x%x", unsubscribe)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
 
 		n, err = conn.Write(unsubscribe)
 		switch {
@@ -61,8 +71,10 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 
 	switch {
 	case bytes.Equal(data, []byte{0}):
+		d.infof("Mute on %v is %v", block, false)
 		return false, nil
 	case bytes.Equal(data, []byte{1}):
+		d.infof("Mute on %v is %v", block, true)
 		return true, nil
 	default:
 		return false, errors.New("bad data in response from DSP")
@@ -82,6 +94,11 @@ func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) err
 	}
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
+		d.infof("Setting mute on %v to %v", block, muted)
+		d.debugf("Writing command: 0x%x", cmd)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
+
 		n, err := conn.Write(cmd)
 		switch {
 		case err != nil:
@@ -95,6 +112,8 @@ func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) err
 	if err != nil {
 		return err
 	}
+
+	d.infof("Mute on %v successfully set", block)
 
 	return nil
 }

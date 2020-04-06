@@ -42,8 +42,9 @@ func New(addr string, opts ...Option) *DSP {
 	d := &DSP{
 		address: addr,
 		pool: &connpool.Pool{
-			TTL:   options.ttl,
-			Delay: options.delay,
+			TTL:    options.ttl,
+			Delay:  options.delay,
+			Logger: options.logger,
 		},
 		logger: options.logger,
 	}

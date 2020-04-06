@@ -28,6 +28,11 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 	var resp []byte
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
+		d.infof("Getting volume on %v", block)
+		d.debugf("Writing subscribe command: 0x%x", subscribe)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
+
 		n, err := conn.Write(subscribe)
 		switch {
 		case err != nil:
@@ -40,6 +45,11 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		if err != nil {
 			return fmt.Errorf("unable to read response: %w", err)
 		}
+
+		d.debugf("Got response: 0x%x", resp)
+		d.debugf("Writing unsubscribe command: 0x%x", unsubscribe)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
 
 		n, err = conn.Write(unsubscribe)
 		switch {
@@ -66,6 +76,8 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 	vol = vol / volumeScaleFactor
 	vol++
 
+	d.infof("Volume on %v is %v", block, int(vol))
+
 	return int(vol), nil
 }
 
@@ -85,6 +97,11 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 	}
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
+		d.infof("Setting volume on %v to %v", block, volume)
+		d.debugf("Writing command: 0x%x", cmd)
+
+		conn.SetWriteDeadline(time.Now().Add(3 * time.Second))
+
 		n, err := conn.Write(cmd)
 		switch {
 		case err != nil:
@@ -98,6 +115,8 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 	if err != nil {
 		return err
 	}
+
+	d.infof("Volume on %v successfully set", block)
 
 	return nil
 }
