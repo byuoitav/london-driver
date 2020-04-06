@@ -7,6 +7,7 @@ type Logger interface {
 	Warnf(format string, a ...interface{})
 	Errorf(format string, a ...interface{})
 }
+
 func (d *DSP) debugf(format string, a ...interface{}) {
 	if d.logger != nil {
 		d.logger.Debugf(format, a...)
