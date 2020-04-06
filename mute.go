@@ -1,26 +1,24 @@
 package london
 
 import (
+	"bytes"
 	"context"
-	"encoding/binary"
-	"fmt" "time"
+	"errors"
+	"fmt"
+	"time"
 
 	"github.com/byuoitav/connpool"
 )
 
-const (
-	volumeScaleFactor = 65536
-)
-
-func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
-	subscribe, err := buildSubscribeCommand(methodSubscribePercent, stateGain, block, minSubscribeInterval)
+func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
+	subscribe, err := buildSubscribeCommand(methodSubscribe, stateMute, block, minSubscribeInterval)
 	if err != nil {
-		return 0, fmt.Errorf("unable to build subscribe command: %w", err)
+		return false, fmt.Errorf("unable to build subscribe command: %w", err)
 	}
 
-	unsubscribe, err := buildUnsubscribeCommand(methodUnsubscribePercent, stateGain, block)
+	unsubscribe, err := buildUnsubscribeCommand(methodUnsubscribe, stateMute, block)
 	if err != nil {
-		return 0, fmt.Errorf("unable to build unsubscribe command: %w", err)
+		return false, fmt.Errorf("unable to build unsubscribe command: %w", err)
 	}
 
 	var resp []byte
@@ -50,29 +48,33 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
 	resp, err = decode(resp)
 	if err != nil {
-		return 0, fmt.Errorf("unable to decode response: %w", err)
+		return false, fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	data := resp[len(resp)-4:]
-	vol := binary.BigEndian.Uint32(data)
+	data := resp[len(resp)-1:]
 
-	vol = vol / volumeScaleFactor
-	vol++
-
-	return int(vol), nil
+	switch {
+	case bytes.Equal(data, []byte{0}):
+		return false, nil
+	case bytes.Equal(data, []byte{1}):
+		return true, nil
+	default:
+		return false, errors.New("bad data in response from DSP")
+	}
 }
 
-func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) error {
-	volume *= volumeScaleFactor
-	data := make([]byte, 4)
-	binary.BigEndian.PutUint32(data, uint32(volume))
+func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) error {
+	data := []byte{0x00, 0x00, 0x00, 0x00}
+	if muted {
+		data[3] = 0x01
+	}
 
-	cmd, err := buildCommand(methodSetPercent, stateGain, block, data)
+	cmd, err := buildCommand(methodSet, stateMute, block, data)
 	if err != nil {
 		return fmt.Errorf("unable to build command: %w", err)
 	}

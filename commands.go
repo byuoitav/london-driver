@@ -11,20 +11,6 @@ import (
 const LEN_NODE = 2
 const LEN_ADDR = 5
 
-//builds command, node, virtual device, and object
-func (d *DSP) GetCommandAddress(ctx context.Context, commandByte byte) ([]byte, error) {
-
-	log.Printf("Addressing command %X to address %s...", commandByte, d.Address)
-	command := []byte{commandByte}
-
-	nodeBytes := make([]byte, 2)
-	command = append(command, nodeBytes...)
-
-	command = append(command, VIRTUAL_DEVICE)
-
-	return command, nil
-}
-
 func (d *DSP) BuildRawMuteCommand(ctx context.Context, input, status string) ([]byte, error) {
 
 	log.Printf("Building raw mute command for input: %s at address: %s", input, d.Address)
