@@ -13,7 +13,7 @@ type options struct {
 	logger Logger
 }
 
-// Option configures how we create the DSP
+// Option configures how we create the DSP.
 type Option interface {
 	apply(*options)
 }
@@ -26,7 +26,7 @@ func (f optionFunc) apply(o *options) {
 
 // WithTTL changes the TTL for the underlying TCP connection to the DSP.
 // The default value is 30 seconds.
-// See more details about TTL in github.com/byuoitav/connpool.
+// See more details about TTL in https://github.com/byuoitav/connpool.
 func WithTTL(t time.Duration) Option {
 	return optionFunc(func(o *options) {
 		o.ttl = t
@@ -35,7 +35,7 @@ func WithTTL(t time.Duration) Option {
 
 // WithDelay changes the delay between sending commands to the DSP.
 // The default value is 250 milliseconds.
-// See more details about delay in github.com/byuoitav/connpool.
+// See more details about delay in https://github.com/byuoitav/connpool.
 func WithDelay(t time.Duration) Option {
 	return optionFunc(func(o *options) {
 		o.delay = t

@@ -10,6 +10,7 @@ import (
 	"github.com/byuoitav/connpool"
 )
 
+// GetMutedByBlock returns true if the given block is muted.
 func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 	subscribe, err := buildSubscribeCommand(methodSubscribe, stateMute, block, minSubscribeInterval)
 	if err != nil {
@@ -68,6 +69,7 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 	}
 }
 
+// SetMutedByBlock sets the mute state on the given block.
 func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) error {
 	data := []byte{0x00, 0x00, 0x00, 0x00}
 	if muted {

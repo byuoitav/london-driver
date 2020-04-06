@@ -3,7 +3,8 @@ package london
 import (
 	"context"
 	"encoding/binary"
-	"fmt" "time"
+	"fmt"
+	"time"
 
 	"github.com/byuoitav/connpool"
 )
@@ -12,6 +13,7 @@ const (
 	volumeScaleFactor = 65536
 )
 
+// GetVolumeByBlock returns the volume [0, 100] of the given block.
 func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 	subscribe, err := buildSubscribeCommand(methodSubscribePercent, stateGain, block, minSubscribeInterval)
 	if err != nil {
@@ -67,7 +69,12 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 	return int(vol), nil
 }
 
+// SetVolumeByBlock sets the volume on the given block. Volume must be in the range [0, 100].
 func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) error {
+	if volume < 0 || volume > 100 {
+		return fmt.Errorf("volume must be in range [0, 100]")
+	}
+
 	volume *= volumeScaleFactor
 	data := make([]byte, 4)
 	binary.BigEndian.PutUint32(data, uint32(volume))

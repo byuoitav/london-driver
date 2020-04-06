@@ -14,6 +14,7 @@ package london
 
 import (
 	"context"
+	"errors"
 	"net"
 
 	"github.com/byuoitav/connpool"
@@ -55,6 +56,7 @@ func New(addr string, opts ...Option) *DSP {
 	return d
 }
 
+// GetInfo is not implemented.
 func (d *DSP) GetInfo(ctx context.Context) (interface{}, error) {
-	return nil, nil
+	return nil, errors.New("not implemented")
 }
