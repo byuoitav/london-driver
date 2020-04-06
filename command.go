@@ -39,6 +39,8 @@ const (
 // bytes that need to be encoded
 var encodedBytes = []int{
 	asciiESC,
+	asciiSTX,
+	asciiETX,
 	asciiACK,
 	asciiNAK,
 }
@@ -106,7 +108,7 @@ func encode(b []byte) ([]byte, error) {
 
 	for _, eByte := range encodedBytes {
 		binary.BigEndian.PutUint16(escaped, uint16(eByte+encodeOffset))
-		b = bytes.Replace(b, []byte{byte(eByte)}, escaped, 1)
+		b = bytes.Replace(b, []byte{byte(eByte)}, escaped, -1)
 	}
 
 	switch {
@@ -148,7 +150,7 @@ func decode(b []byte) ([]byte, error) {
 
 	for _, eByte := range encodedBytes {
 		binary.BigEndian.PutUint16(escaped, uint16(eByte+encodeOffset))
-		b = bytes.Replace(b, escaped, []byte{byte(eByte)}, 1)
+		b = bytes.Replace(b, escaped, []byte{byte(eByte)}, -1)
 	}
 
 	// check the checksum
