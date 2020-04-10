@@ -4,7 +4,7 @@ import "time"
 
 var (
 	_defaultTTL   = 30 * time.Second
-	_defaultDelay = 250 * time.Millisecond
+	_defaultDelay = 500 * time.Millisecond
 )
 
 type options struct {

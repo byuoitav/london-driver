@@ -25,6 +25,9 @@ func (d *DSP) GetVolumeByBlock(ctx context.Context, block string) (int, error) {
 		return 0, fmt.Errorf("unable to build unsubscribe command: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	var resp []byte
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
@@ -95,6 +98,9 @@ func (d *DSP) SetVolumeByBlock(ctx context.Context, block string, volume int) er
 	if err != nil {
 		return fmt.Errorf("unable to build command: %w", err)
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
 		d.infof("Setting volume on %v to %v", block, volume)

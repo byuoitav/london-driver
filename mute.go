@@ -22,6 +22,9 @@ func (d *DSP) GetMutedByBlock(ctx context.Context, block string) (bool, error) {
 		return false, fmt.Errorf("unable to build unsubscribe command: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	var resp []byte
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
@@ -92,6 +95,9 @@ func (d *DSP) SetMutedByBlock(ctx context.Context, block string, muted bool) err
 	if err != nil {
 		return fmt.Errorf("unable to build command: %w", err)
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	err = d.pool.Do(ctx, func(conn connpool.Conn) error {
 		d.infof("Setting mute on %v to %v", block, muted)
