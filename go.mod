@@ -1,5 +1,5 @@
 module github.com/byuoitav/london-driver
 
-go 1.13
+go 1.14
 
-require github.com/byuoitav/connpool v0.2.1
+require github.com/byuoitav/connpool v0.3.0
