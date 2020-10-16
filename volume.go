@@ -47,7 +47,12 @@ func (d *DSP) GetVolumes(ctx context.Context, blocks []string) (map[string]int, 
 				return fmt.Errorf("unable to write subscribe command: wrote %v/%v bytes", n, len(subscribe))
 			}
 
-			resp, err = conn.ReadUntil(asciiETX, 3*time.Second)
+			deadline, ok := ctx.Deadline()
+			if !ok {
+				return fmt.Errorf("no deadline set")
+			}
+
+			resp, err = conn.ReadUntil(asciiETX, deadline)
 			if err != nil {
 				return fmt.Errorf("unable to read response: %w", err)
 			}
