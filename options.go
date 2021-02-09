@@ -3,7 +3,7 @@ package london
 import "time"
 
 var (
-	_defaultTTL   = 30 * time.Second
+	_defaultTTL   = 90 * time.Second
 	_defaultDelay = 500 * time.Millisecond
 )
 
